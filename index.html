@@ -38,18 +38,24 @@ td.v{text-align:right;white-space:nowrap;}
 <h1>退職金計算君</h1>
 <div class="subtitle">中部菱成(株) 退職金規則にもとづく試算</div>
 
+<label for="birth">生年月日</label>
+<input type="date" id="birth">
+
+<label for="kind">入社区分</label>
+<select id="kind">
+ <option value="kosotsu">高卒(18歳の4/1入社)</option>
+ <option value="kosen">高専卒(20歳の4/1入社)</option>
+ <option value="daisotsu">大卒(22歳の4/1入社)</option>
+ <option value="chuto">中途(入社日を入力)</option>
+</select>
+
 <label for="hire">雇入れ日(入社日)</label>
 <input type="date" id="hire">
+<div class="hint" id="hireHint">生年月日と入社区分から自動で入ります。違う場合は直接変更できます。</div>
 
 <label for="retire">退職日</label>
 <input type="date" id="retire">
-<div class="hint" id="teinenHint" hidden>定年は満60歳に達した年度の3月31日です。生年月日から求めることもできます。</div>
-<div id="birthBlock" hidden>
- <div class="row" style="margin-top:8px">
-  <input type="date" id="birth" aria-label="生年月日">
-  <button type="button" id="birthBtn" style="margin:0;padding:10px;font-size:14px;flex:none;width:auto;background:#555">定年退職日を入力</button>
- </div>
-</div>
+<div class="hint">生年月日を入れると、満65歳に達した年度の3月31日が自動で入ります(規則上の定年は満60歳、希望者は65歳まで再雇用)。変更もできます。</div>
 
 <label for="reason">退職事由</label>
 <select id="reason">
@@ -126,20 +132,23 @@ td.v{text-align:right;white-space:nowrap;}
  function syncReason(){
   var r=R.REASONS[$('reason').value];
   $('ptsBlock').hidden=r.column!=='A';
-  var teinen=$('reason').value==='teinen';
-  $('teinenHint').hidden=!teinen;
-  $('birthBlock').hidden=!teinen;
  }
  $('reason').addEventListener('change',syncReason);
  syncReason();
 
- $('birthBtn').addEventListener('click',function(){
+ function autoDates(fromKind){
   var b=parse($('birth').value);
-  if(!b){alert('生年月日を入力してください。');return;}
-  var y=b.getFullYear()+60;
-  var d60=new Date(y,b.getMonth(),b.getDate());
-  var fy=(d60.getMonth()>=3)?d60.getFullYear()+1:d60.getFullYear();
-  $('retire').value=ymd(new Date(fy,2,31));
+  var kind=$('kind').value;
+  if(fromKind&&kind==='chuto')$('hire').value='';
+  if(!b)return;
+  var e=R.entryDate(b,kind);
+  if(e)$('hire').value=ymd(e);
+  $('retire').value=ymd(R.retireDate(b));
+ }
+ $('birth').addEventListener('change',function(){autoDates(false);});
+ $('kind').addEventListener('change',function(){
+  autoDates(true);
+  if($('kind').value==='chuto')$('hire').focus();
  });
 
  function pos(a,b){return {y:$(a).value,m:$(b).value};}

@@ -36,6 +36,24 @@ function tenureMonths(hire,retire){
  return m;
 }
 
+var ENTRY_AGE={kosotsu:19,kosen:21,daisotsu:23};
+var RETIRE_AGE=65;
+
+function schoolYear(birth){
+ var y=birth.getFullYear();
+ var beforeApr2=birth.getMonth()<3||(birth.getMonth()===3&&birth.getDate()===1);
+ return beforeApr2?y-1:y;
+}
+
+function entryDate(birth,kind){
+ if(!ENTRY_AGE[kind])return null;
+ return new Date(schoolYear(birth)+ENTRY_AGE[kind],3,1);
+}
+
+function retireDate(birth,age){
+ return new Date(schoolYear(birth)+(age||RETIRE_AGE)+1,2,31);
+}
+
 function coefficient(table,months){
  var y=Math.floor(months/12),r=months%12;
  if(y<1)return 0;
@@ -100,7 +118,7 @@ function calcRetirement(inp){
  return out;
 }
 
-var api={COEF_A:COEF_A,COEF_B:COEF_B,REASONS:REASONS,POINTS:POINTS,POINT_YEN:POINT_YEN,tenureMonths:tenureMonths,coefficient:coefficient,ceil1000:ceil1000,calcRetirement:calcRetirement};
+var api={COEF_A:COEF_A,COEF_B:COEF_B,REASONS:REASONS,POINTS:POINTS,POINT_YEN:POINT_YEN,RETIRE_AGE:RETIRE_AGE,entryDate:entryDate,retireDate:retireDate,tenureMonths:tenureMonths,coefficient:coefficient,ceil1000:ceil1000,calcRetirement:calcRetirement};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 else root.Retirement=api;
 
