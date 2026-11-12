@@ -60,6 +60,14 @@ td.v{text-align:right;white-space:nowrap;}
  <option value="jiko">B　自己都合退職(勤続5年未満は不支給)</option>
 </select>
 
+<div id="ageBlock">
+ <label for="retireAge">退職年齢</label>
+ <select id="retireAge">
+  <option value="60">60歳(定年)</option>
+  <option value="65" selected>65歳(再雇用満了)</option>
+ </select>
+</div>
+
 <label for="retire">退職日</label>
 <input type="text" id="retire" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="例: 20300331" readonly>
 <div class="hint" id="retireHint"></div>
@@ -185,7 +193,7 @@ td.v{text-align:right;white-space:nowrap;}
   if(!b)return;
   var e=R.entryDate(b,kind);
   if(e)$('hire').value=slash(e);
-  if($('reason').value==='teinen')$('retire').value=slash(R.retireDate(b));
+  if($('reason').value==='teinen')$('retire').value=slash(R.retireDate(b,+$('retireAge').value));
   autoHonkyu(false);
  }
  bindDateField($('birth'),$('birthHint'),'数字8桁で入力してください(例: 19800815)。',function(){autoDates(false);},function(){
@@ -207,6 +215,7 @@ td.v{text-align:right;white-space:nowrap;}
   var r=R.REASONS[$('reason').value];
   $('ptsBlock').hidden=r.column!=='A';
   var manual=$('reason').value==='jiko';
+  $('ageBlock').hidden=manual;
   var retire=$('retire'),hint=$('retireHint');
   retire.readOnly=!manual;
   retire.style.background=manual?'#fff':'#f0f0f0';
@@ -215,13 +224,14 @@ td.v{text-align:right;white-space:nowrap;}
    hint.textContent='退職日を入力してください(数字8桁 例: 20300331)。';
    if(fromChange){retire.value='';retire.focus();}
   }else{
-   hint.textContent='満65歳に達した年度の3/31が自動で入ります(生年月日が必要です。規則上の定年は満60歳、希望者は65歳まで再雇用)。';
+   hint.textContent='満'+$('retireAge').value+'歳に達した年度の3/31が自動で入ります(生年月日が必要です)。';
    var b=parseDateText($('birth').value);
-   if(b)retire.value=slash(R.retireDate(b));
+   if(b)retire.value=slash(R.retireDate(b,+$('retireAge').value));
   }
   autoHonkyu(false);
  }
  $('reason').addEventListener('change',function(){syncReason(true);});
+ $('retireAge').addEventListener('change',function(){syncReason(false);});
  $('kind').addEventListener('change',function(){syncKind(true);});
  bindDateField($('hire'),$('hireHint'),'入社日を数字8桁で入力してください(例: 20150401)。',function(){});
  syncKind(false);
