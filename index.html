@@ -39,7 +39,8 @@ td.v{text-align:right;white-space:nowrap;}
 <div class="subtitle">中部菱成(株) 退職金規則にもとづく試算</div>
 
 <label for="birth">生年月日</label>
-<input type="date" id="birth">
+<input type="text" id="birth" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="例: 19800815">
+<div class="hint" id="birthHint">数字8桁で入力してください(例: 19800815)。</div>
 
 <label for="kind">入社区分</label>
 <select id="kind">
@@ -107,6 +108,14 @@ td.v{text-align:right;white-space:nowrap;}
   var p=s.split('-');
   return new Date(+p[0],+p[1]-1,+p[2]);
  }
+ function parseBirth(s){
+  var d=(s||'').replace(/\D/g,'');
+  if(d.length!==8)return null;
+  var y=+d.slice(0,4),m=+d.slice(4,6),dd=+d.slice(6,8);
+  var dt=new Date(y,m-1,dd);
+  if(dt.getFullYear()!==y||dt.getMonth()!==m-1||dt.getDate()!==dd)return null;
+  return dt;
+ }
  function yen(n){return '¥'+Math.round(n).toLocaleString('ja-JP');}
  function jdate(d){return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';}
  function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
@@ -131,7 +140,7 @@ td.v{text-align:right;white-space:nowrap;}
  var honkyuManual=false;
  function autoHonkyu(force){
   if(honkyuManual&&!force)return;
-  var b=parse($('birth').value),d=parse($('retire').value);
+  var b=parseBirth($('birth').value),d=parse($('retire').value);
   var hint=$('honkyuHint');
   if(!b||!d)return;
   var h=R.honkyuAt(b,d);
@@ -145,13 +154,13 @@ td.v{text-align:right;white-space:nowrap;}
  }
  $('honkyu').addEventListener('input',function(){honkyuManual=true;});
  $('honkyuAuto').addEventListener('click',function(){
-  if(!parse($('birth').value)||!parse($('retire').value)){alert('生年月日と退職日を入力してください。');return;}
+  if(!parseBirth($('birth').value)||!parse($('retire').value)){alert('生年月日と退職日を入力してください。');return;}
   autoHonkyu(true);
  });
  $('retire').addEventListener('change',function(){autoHonkyu(false);});
 
  function autoDates(fromKind){
-  var b=parse($('birth').value);
+  var b=parseBirth($('birth').value);
   var kind=$('kind').value;
   if(fromKind&&kind==='chuto')$('hire').value='';
   if(!b)return;
@@ -160,7 +169,15 @@ td.v{text-align:right;white-space:nowrap;}
   $('retire').value=ymd(R.retireDate(b));
   autoHonkyu(false);
  }
- $('birth').addEventListener('change',function(){autoDates(false);});
+ $('birth').addEventListener('input',function(){
+  var d=this.value.replace(/\D/g,'').slice(0,8);
+  this.value=d.length>6?d.slice(0,4)+'/'+d.slice(4,6)+'/'+d.slice(6):(d.length>4?d.slice(0,4)+'/'+d.slice(4):d);
+  var hint=$('birthHint');
+  if(d.length<8){hint.textContent='数字8桁で入力してください(例: 19800815)。';hint.style.color='';return;}
+  if(!parseBirth(d)){hint.textContent='日付として正しくありません。もう一度入力してください。';hint.style.color='#b00000';return;}
+  hint.textContent='';
+  autoDates(false);
+ });
  $('kind').addEventListener('change',function(){
   autoDates(true);
   if($('kind').value==='chuto')$('hire').focus();
