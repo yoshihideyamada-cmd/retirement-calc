@@ -59,20 +59,8 @@ td.v{text-align:right;white-space:nowrap;}
 
 <label for="reason">退職事由</label>
 <select id="reason">
- <optgroup label="A欄適用">
-  <option value="teinen">定年退職</option>
-  <option value="shamei">社命による他社転属</option>
-  <option value="shibo">死亡</option>
-  <option value="gyomu">業務上の事由による傷病退職(解雇)</option>
- </optgroup>
- <optgroup label="B欄適用">
-  <option value="higyomu">業務外の事由による傷病退職</option>
-  <option value="kaiko">規定による解雇(退職金規則第2条(2))</option>
-  <option value="jiko" selected>自己都合退職(勤続5年未満は不支給)</option>
- </optgroup>
- <optgroup label="その他">
-  <option value="chokai">懲戒解雇(原則不支給)</option>
- </optgroup>
+ <option value="teinen" selected>A　定年退職</option>
+ <option value="jiko">B　自己都合退職(勤続5年未満は不支給)</option>
 </select>
 
 <label for="honkyu">退職時の本給(円)</label>
@@ -160,7 +148,7 @@ td.v{text-align:right;white-space:nowrap;}
   if(!hire||!retire){alert('雇入れ日と退職日を入力してください。');return;}
   if(retire<hire){alert('退職日が雇入れ日より前になっています。');return;}
   var reasonKey=$('reason').value;
-  if(reasonKey!=='chokai'&&!(honkyu>0)){alert('退職時の本給を入力してください。');return;}
+  if(!(honkyu>0)){alert('退職時の本給を入力してください。');return;}
 
   var r=R.calcRetirement({
    hire:hire,retire:retire,reason:reasonKey,honkyu:honkyu,

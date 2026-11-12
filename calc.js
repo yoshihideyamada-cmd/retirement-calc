@@ -10,13 +10,7 @@ var POINT_YEN=5000;
 
 var REASONS={
  teinen:{column:'A',label:'定年退職'},
- shamei:{column:'A',label:'社命による他社転属'},
- shibo:{column:'A',label:'死亡'},
- gyomu:{column:'A',label:'業務上の事由による傷病退職(解雇)'},
- higyomu:{column:'B',label:'業務外の事由による傷病退職'},
- kaiko:{column:'B',label:'規定(退職金規則第2条)による解雇'},
- jiko:{column:'B',label:'自己都合退職'},
- chokai:{column:null,label:'懲戒解雇'}
+ jiko:{column:'B',label:'自己都合退職'}
 };
 
 function addMonths(d,n){
@@ -89,10 +83,6 @@ function calcRetirement(inp){
 
  if(months<12){
   out.notes.push('勤続1年未満のため退職金は支給されません(第1条)。');
-  return out;
- }
- if(inp.reason==='chokai'){
-  out.notes.push('懲戒解雇の場合は退職金は支給されません(第4条)。勤続10年以上の場合に限り、情状により一部が支給されることがあります(会社の判断・本ツールでは計算しません)。');
   return out;
  }
  if(inp.reason==='jiko'&&months<60){
