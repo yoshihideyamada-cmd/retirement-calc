@@ -48,6 +48,21 @@ function retireDate(birth,age){
  return new Date(schoolYear(birth)+(age||RETIRE_AGE)+1,2,31);
 }
 
+var AGE_PAY_MIN=19,AGE_PAY_MAX=53;
+function agePay(age){
+ if(age<AGE_PAY_MIN)return null;
+ var a=Math.min(age,AGE_PAY_MAX),pay=132000;
+ for(var i=AGE_PAY_MIN+1;i<=a;i++)pay+=i<=30?2000:(i<=50?1000:500);
+ return pay;
+}
+
+function honkyuAt(birth,date){
+ var feb1=new Date(date.getFullYear(),1,1);
+ var u=date>=feb1?date.getFullYear():date.getFullYear()-1;
+ var age=u-schoolYear(birth)-1;
+ return {age:age,amount:agePay(age),capped:age>AGE_PAY_MAX};
+}
+
 function coefficient(table,months){
  var y=Math.floor(months/12),r=months%12;
  if(y<1)return 0;
@@ -108,7 +123,7 @@ function calcRetirement(inp){
  return out;
 }
 
-var api={COEF_A:COEF_A,COEF_B:COEF_B,REASONS:REASONS,POINTS:POINTS,POINT_YEN:POINT_YEN,RETIRE_AGE:RETIRE_AGE,entryDate:entryDate,retireDate:retireDate,tenureMonths:tenureMonths,coefficient:coefficient,ceil1000:ceil1000,calcRetirement:calcRetirement};
+var api={COEF_A:COEF_A,COEF_B:COEF_B,REASONS:REASONS,POINTS:POINTS,POINT_YEN:POINT_YEN,RETIRE_AGE:RETIRE_AGE,agePay:agePay,honkyuAt:honkyuAt,entryDate:entryDate,retireDate:retireDate,tenureMonths:tenureMonths,coefficient:coefficient,ceil1000:ceil1000,calcRetirement:calcRetirement};
 if(typeof module!=='undefined'&&module.exports)module.exports=api;
 else root.Retirement=api;
 

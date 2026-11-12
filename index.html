@@ -64,7 +64,11 @@ td.v{text-align:right;white-space:nowrap;}
 </select>
 
 <label for="honkyu">退職時の本給(円)</label>
-<input type="number" id="honkyu" inputmode="numeric" min="0" step="1" placeholder="例: 300000">
+<div class="row">
+ <input type="number" id="honkyu" inputmode="numeric" min="0" step="1" placeholder="生年月日と退職日から自動で入ります">
+ <button type="button" id="honkyuAuto" style="margin:0;padding:10px;font-size:13px;flex:none;width:auto;background:#555">年齢給で自動計算</button>
+</div>
+<div class="hint" id="honkyuHint">本給は年齢給(本給規則 表-1)の額です。直接入力して変更もできます。</div>
 
 <div id="ptsBlock" hidden>
  <label>主事職能以上の職位年数(A欄のみ・該当なしは空欄)</label>
@@ -124,6 +128,28 @@ td.v{text-align:right;white-space:nowrap;}
  $('reason').addEventListener('change',syncReason);
  syncReason();
 
+ var honkyuManual=false;
+ function autoHonkyu(force){
+  if(honkyuManual&&!force)return;
+  var b=parse($('birth').value),d=parse($('retire').value);
+  var hint=$('honkyuHint');
+  if(!b||!d)return;
+  var h=R.honkyuAt(b,d);
+  if(h.amount===null){
+   hint.textContent='退職時の学齢'+h.age+'歳は年齢給(表-1)にありません。本給を直接入力してください。';
+   return;
+  }
+  $('honkyu').value=h.amount;
+  honkyuManual=false;
+  hint.textContent='年齢給(表-1): 学齢'+h.age+'歳'+(h.capped?'は表の上限(53歳)の額':'の額')+' '+yen(h.amount)+' を入力しました(直近の2/1昇給・4/1現在の学齢で判定)。直接入力して変更もできます。';
+ }
+ $('honkyu').addEventListener('input',function(){honkyuManual=true;});
+ $('honkyuAuto').addEventListener('click',function(){
+  if(!parse($('birth').value)||!parse($('retire').value)){alert('生年月日と退職日を入力してください。');return;}
+  autoHonkyu(true);
+ });
+ $('retire').addEventListener('change',function(){autoHonkyu(false);});
+
  function autoDates(fromKind){
   var b=parse($('birth').value);
   var kind=$('kind').value;
@@ -132,6 +158,7 @@ td.v{text-align:right;white-space:nowrap;}
   var e=R.entryDate(b,kind);
   if(e)$('hire').value=ymd(e);
   $('retire').value=ymd(R.retireDate(b));
+  autoHonkyu(false);
  }
  $('birth').addEventListener('change',function(){autoDates(false);});
  $('kind').addEventListener('change',function(){
