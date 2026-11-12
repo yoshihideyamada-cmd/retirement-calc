@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>退職金計算君</title>
+<meta name="theme-color" content="#d60000">
+<style>
+*{box-sizing:border-box;}
+body{font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","Meiryo",sans-serif;background:#f5f5f5;margin:0;padding:20px;-webkit-text-size-adjust:100%;color:#222;}
+.card{max-width:600px;margin:auto;background:#fff;border-radius:16px;padding:24px;box-shadow:0 4px 12px rgba(0,0,0,.1);}
+h1{text-align:center;margin:0 0 6px;}
+.subtitle{text-align:center;color:#666;font-size:14px;margin-bottom:22px;}
+label{display:block;font-weight:700;font-size:14px;margin:16px 0 6px;}
+input,select{width:100%;font-size:17px;padding:10px;border:1px solid #ccc;border-radius:8px;background:#fff;}
+.row{display:flex;gap:10px;align-items:center;}
+.row>*{flex:1;}
+.pos{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.pos span.name{width:3.2em;font-weight:700;}
+.pos input{width:5.5em;flex:none;}
+.hint{color:#777;font-size:12px;margin-top:4px;}
+button{width:100%;margin-top:22px;padding:14px;font-size:18px;font-weight:700;color:#fff;background:#d60000;border:0;border-radius:10px;cursor:pointer;}
+.result{margin-top:24px;border-top:1px solid #e5e5e5;padding-top:18px;}
+.total{background:#fff4f4;border:2px solid #d60000;border-radius:12px;padding:14px;text-align:center;margin-bottom:14px;}
+.total .num{font-size:30px;font-weight:700;color:#d60000;}
+.total .none{font-size:20px;font-weight:700;color:#555;}
+table{width:100%;border-collapse:collapse;font-size:14px;}
+td{padding:7px 4px;border-bottom:1px solid #eee;vertical-align:top;}
+td.v{text-align:right;white-space:nowrap;}
+.notes{font-size:13px;color:#b00000;margin-top:12px;}
+.notes p{margin:4px 0;}
+.foot{font-size:12px;color:#888;margin-top:18px;line-height:1.6;}
+#ptsBlock[hidden]{display:none;}
+</style>
+</head>
+<body>
+<div class="card">
+<h1>退職金計算君</h1>
+<div class="subtitle">中部菱成(株) 退職金規則にもとづく試算</div>
+
+<label for="hire">雇入れ日(入社日)</label>
+<input type="date" id="hire">
+
+<label for="retire">退職日</label>
+<input type="date" id="retire">
+<div class="hint" id="teinenHint" hidden>定年は満60歳に達した年度の3月31日です。生年月日から求めることもできます。</div>
+<div id="birthBlock" hidden>
+ <div class="row" style="margin-top:8px">
+  <input type="date" id="birth" aria-label="生年月日">
+  <button type="button" id="birthBtn" style="margin:0;padding:10px;font-size:14px;flex:none;width:auto;background:#555">定年退職日を入力</button>
+ </div>
+</div>
+
+<label for="reason">退職事由</label>
+<select id="reason">
+ <optgroup label="A欄適用">
+  <option value="teinen">定年退職</option>
+  <option value="shamei">社命による他社転属</option>
+  <option value="shibo">死亡</option>
+  <option value="gyomu">業務上の事由による傷病退職(解雇)</option>
+ </optgroup>
+ <optgroup label="B欄適用">
+  <option value="higyomu">業務外の事由による傷病退職</option>
+  <option value="kaiko">規定による解雇(退職金規則第2条(2))</option>
+  <option value="jiko" selected>自己都合退職(勤続5年未満は不支給)</option>
+ </optgroup>
+ <optgroup label="その他">
+  <option value="chokai">懲戒解雇(原則不支給)</option>
+ </optgroup>
+</select>
+
+<label for="honkyu">退職時の本給(円)</label>
+<input type="number" id="honkyu" inputmode="numeric" min="0" step="1" placeholder="例: 300000">
+
+<div id="ptsBlock" hidden>
+ <label>主事職能以上の職位年数(A欄のみ・該当なしは空欄)</label>
+ <div class="pos"><span class="name">主事</span><input type="number" id="shujiY" min="0" placeholder="年" inputmode="numeric">年<input type="number" id="shujiM" min="0" max="11" placeholder="月" inputmode="numeric">ヶ月</div>
+ <div class="pos"><span class="name">参事</span><input type="number" id="sanjiY" min="0" placeholder="年" inputmode="numeric">年<input type="number" id="sanjiM" min="0" max="11" placeholder="月" inputmode="numeric">ヶ月</div>
+ <div class="pos"><span class="name">参与</span><input type="number" id="sanyoY" min="0" placeholder="年" inputmode="numeric">年<input type="number" id="sanyoM" min="0" max="11" placeholder="月" inputmode="numeric">ヶ月</div>
+ <div class="hint">年間ポイント: 主事10P・参事50P・参与70P、1ポイント5,000円</div>
+
+ <label for="kourou">功労係数(0.6〜1.2)</label>
+ <select id="kourou"></select>
+ <div class="hint">会社が決定する係数です。不明な場合は1.0のままにしてください。</div>
+</div>
+
+<button type="button" id="calcBtn">計算する</button>
+
+<div class="result" id="result" hidden></div>
+
+<div class="foot">
+規則(退職金規則 第1〜10条・別表1)から算出した試算です。実際の支給額は会社の決定によります。<br>
+勤続年数は雇入れ日起算・退職日を含めて数え、1年未満の端数は月割(係数を月数で按分)、1ヶ月未満の端数は切り上げ。最終金額は1,000円未満を切り上げます。
+</div>
+</div>
+
+<script src="calc.js"></script>
+<script>
+(function(){
+ var R=window.Retirement;
+ var $=function(id){return document.getElementById(id);};
+
+ function ymd(d){
+  var m=('0'+(d.getMonth()+1)).slice(-2),dd=('0'+d.getDate()).slice(-2);
+  return d.getFullYear()+'-'+m+'-'+dd;
+ }
+ function parse(s){
+  if(!s)return null;
+  var p=s.split('-');
+  return new Date(+p[0],+p[1]-1,+p[2]);
+ }
+ function yen(n){return '¥'+Math.round(n).toLocaleString('ja-JP');}
+ function jdate(d){return d.getFullYear()+'年'+(d.getMonth()+1)+'月'+d.getDate()+'日';}
+ function esc(s){return String(s).replace(/[&<>"]/g,function(c){return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;'}[c];});}
+
+ var ko=$('kourou');
+ for(var k=6;k<=12;k++){
+  var o=document.createElement('option');
+  o.value=(k/10).toFixed(1);
+  o.textContent=(k/10).toFixed(1);
+  if(k===10)o.selected=true;
+  ko.appendChild(o);
+ }
+ $('retire').value=ymd(new Date());
+
+ function syncReason(){
+  var r=R.REASONS[$('reason').value];
+  $('ptsBlock').hidden=r.column!=='A';
+  var teinen=$('reason').value==='teinen';
+  $('teinenHint').hidden=!teinen;
+  $('birthBlock').hidden=!teinen;
+ }
+ $('reason').addEventListener('change',syncReason);
+ syncReason();
+
+ $('birthBtn').addEventListener('click',function(){
+  var b=parse($('birth').value);
+  if(!b){alert('生年月日を入力してください。');return;}
+  var y=b.getFullYear()+60;
+  var d60=new Date(y,b.getMonth(),b.getDate());
+  var fy=(d60.getMonth()>=3)?d60.getFullYear()+1:d60.getFullYear();
+  $('retire').value=ymd(new Date(fy,2,31));
+ });
+
+ function pos(a,b){return {y:$(a).value,m:$(b).value};}
+
+ $('calcBtn').addEventListener('click',function(){
+  var hire=parse($('hire').value),retire=parse($('retire').value);
+  var honkyu=+$('honkyu').value;
+  var box=$('result');
+  if(!hire||!retire){alert('雇入れ日と退職日を入力してください。');return;}
+  if(retire<hire){alert('退職日が雇入れ日より前になっています。');return;}
+  var reasonKey=$('reason').value;
+  if(reasonKey!=='chokai'&&!(honkyu>0)){alert('退職時の本給を入力してください。');return;}
+
+  var r=R.calcRetirement({
+   hire:hire,retire:retire,reason:reasonKey,honkyu:honkyu,
+   pos:{shuji:pos('shujiY','shujiM'),sanji:pos('sanjiY','sanjiM'),san_yo:pos('sanyoY','sanyoM')},
+   kourou:+$('kourou').value
+  });
+
+  var h='';
+  if(r.payable){
+   h+='<div class="total"><div style="font-size:13px;color:#666">退職金(試算)</div><div class="num">'+yen(r.total)+'</div></div>';
+  }else{
+   h+='<div class="total"><div class="none">支給なし</div></div>';
+  }
+
+  var rows='';
+  rows+='<tr><td>退職事由</td><td class="v">'+esc(r.reasonLabel)+(r.column?'(' +r.column+'欄)':'')+'</td></tr>';
+  rows+='<tr><td>勤続期間</td><td class="v">'+r.years+'年'+r.remMonths+'ヶ月</td></tr>';
+  if(r.payable){
+   rows+='<tr><td>支給係数</td><td class="v">'+r.coef.toFixed(4)+'</td></tr>';
+   rows+='<tr><td>本給 × 係数</td><td class="v">'+yen(honkyu)+' × '+r.coef.toFixed(4)+' = '+yen(r.base)+'</td></tr>';
+   if(r.column==='A'){
+    rows+='<tr><td>ポイント加算</td><td class="v">'+(Math.round(r.points*100)/100)+'P × '+R.POINT_YEN.toLocaleString('ja-JP')+'円 × 功労係数'+r.kourou.toFixed(1)+' = '+yen(r.pointsAmount)+'</td></tr>';
+   }
+   rows+='<tr><td>合計(切り上げ前)</td><td class="v">'+yen(r.subtotal)+'</td></tr>';
+   rows+='<tr><td><b>退職金(1,000円未満切り上げ)</b></td><td class="v"><b>'+yen(r.total)+'</b></td></tr>';
+   rows+='<tr><td>支給期限</td><td class="v">'+jdate(r.dueDate)+'まで</td></tr>';
+  }
+  h+='<table>'+rows+'</table>';
+  if(r.notes.length){
+   h+='<div class="notes">'+r.notes.map(function(n){return '<p>'+esc(n)+'</p>';}).join('')+'</div>';
+  }
+  box.innerHTML=h;
+  box.hidden=false;
+  box.scrollIntoView({behavior:'smooth',block:'nearest'});
+ });
+})();
+</script>
+</body>
+</html>
