@@ -51,8 +51,8 @@ td.v{text-align:right;white-space:nowrap;}
 </select>
 
 <label for="hire">雇入れ日(入社日)</label>
-<input type="date" id="hire">
-<div class="hint" id="hireHint">生年月日と入社区分から自動で入ります。違う場合は直接変更できます。</div>
+<input type="text" id="hire" inputmode="numeric" autocomplete="off" maxlength="10" placeholder="例: 20150401" readonly>
+<div class="hint" id="hireHint"></div>
 
 <label for="retire">退職日</label>
 <input type="date" id="retire">
@@ -107,6 +107,12 @@ td.v{text-align:right;white-space:nowrap;}
   if(!s)return null;
   var p=s.split('-');
   return new Date(+p[0],+p[1]-1,+p[2]);
+ }
+ function slash(d){return d.getFullYear()+'/'+('0'+(d.getMonth()+1)).slice(-2)+'/'+('0'+d.getDate()).slice(-2);}
+ function formatDigits(el){
+  var d=el.value.replace(/\D/g,'').slice(0,8);
+  el.value=d.length>6?d.slice(0,4)+'/'+d.slice(4,6)+'/'+d.slice(6):(d.length>4?d.slice(0,4)+'/'+d.slice(4):d);
+  return d;
  }
  function parseBirth(s){
   var d=(s||'').replace(/\D/g,'');
@@ -165,28 +171,43 @@ td.v{text-align:right;white-space:nowrap;}
   if(fromKind&&kind==='chuto')$('hire').value='';
   if(!b)return;
   var e=R.entryDate(b,kind);
-  if(e)$('hire').value=ymd(e);
+  if(e)$('hire').value=slash(e);
   $('retire').value=ymd(R.retireDate(b));
   autoHonkyu(false);
  }
  $('birth').addEventListener('input',function(){
-  var d=this.value.replace(/\D/g,'').slice(0,8);
-  this.value=d.length>6?d.slice(0,4)+'/'+d.slice(4,6)+'/'+d.slice(6):(d.length>4?d.slice(0,4)+'/'+d.slice(4):d);
+  var d=formatDigits(this);
   var hint=$('birthHint');
   if(d.length<8){hint.textContent='数字8桁で入力してください(例: 19800815)。';hint.style.color='';return;}
   if(!parseBirth(d)){hint.textContent='日付として正しくありません。もう一度入力してください。';hint.style.color='#b00000';return;}
   hint.textContent='';
   autoDates(false);
  });
- $('kind').addEventListener('change',function(){
-  autoDates(true);
-  if($('kind').value==='chuto')$('hire').focus();
+ function syncKind(fromKind){
+  var manual=$('kind').value==='chuto';
+  var hire=$('hire');
+  hire.readOnly=!manual;
+  hire.style.background=manual?'#fff':'#f0f0f0';
+  var hint=$('hireHint');
+  hint.style.color='';
+  hint.textContent=manual?'中途入社は入社日を数字8桁で入力してください(例: 20150401)。':'生年月日と入社区分から、卒業年の4/1が自動で入ります。';
+  autoDates(fromKind);
+  if(fromKind&&manual)hire.focus();
+ }
+ $('kind').addEventListener('change',function(){syncKind(true);});
+ $('hire').addEventListener('input',function(){
+  var d=formatDigits(this);
+  var hint=$('hireHint');
+  if(d.length<8){hint.textContent='入社日を数字8桁で入力してください(例: 20150401)。';hint.style.color='';return;}
+  if(!parseBirth(d)){hint.textContent='日付として正しくありません。もう一度入力してください。';hint.style.color='#b00000';return;}
+  hint.textContent='';
  });
+ syncKind(false);
 
  function pos(a,b){return {y:$(a).value,m:$(b).value};}
 
  $('calcBtn').addEventListener('click',function(){
-  var hire=parse($('hire').value),retire=parse($('retire').value);
+  var hire=parseBirth($('hire').value),retire=parse($('retire').value);
   var honkyu=+$('honkyu').value;
   var box=$('result');
   if(!hire||!retire){alert('雇入れ日と退職日を入力してください。');return;}
